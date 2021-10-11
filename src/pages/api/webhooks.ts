@@ -19,14 +19,24 @@ const buffer = async (readable: Readable) => {
 
 const manageEvents = async (type: string) => {
   switch (type) {
+    case 'customer.subscription.updated':
+    case 'customer.subscription.deleted':
+      const subscription = event.data.object as Stripe.Subscription;
+      
+      await saveSubscription(
+        subscription.id,
+        subscription.customer.toString(),
+        false
+      )
+      break;
     case 'checkout.session.completed':
       const checkoutSession = event.data.object as Stripe.Checkout.Session;
       
       await saveSubscription(
         checkoutSession.subscription.toString(),
-        checkoutSession.customer.toString()
+        checkoutSession.customer.toString(),
+        true
       )
-
       break;
     default:
       throw new Error('Unhandled event.')
@@ -40,13 +50,15 @@ export const config = {
 }
 
 const relevantEvents = new Set([
-  'checkout.session.completed'
+  'checkout.session.completed',
+  'customer.subscription.updated',
+  'customer.subscription.deleted',
 ])
 
 export default async (request: NextApiRequest, response: NextApiResponse) => {
   if (request.method !== 'POST') {
     response.setHeader("Allow", "POST");
-    response.status(405).end("Method not allowed.");
+    return response.status(405).end("Method not allowed.");
   }
 
   const buf = await buffer(request);
