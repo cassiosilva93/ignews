@@ -28,9 +28,7 @@ export default function Post({ post }: PostProps) {
           <div 
             className={styles.postContent}
             dangerouslySetInnerHTML={{ __html: post.content }}
-          >
-
-          </div>
+          />
         </article>
       </main>
     </>
